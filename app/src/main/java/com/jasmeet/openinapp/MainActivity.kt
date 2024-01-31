@@ -1,12 +1,20 @@
 package com.jasmeet.openinapp
 
+import android.annotation.SuppressLint
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
-import com.jasmeet.openinapp.screens.LinkScreen
+import androidx.compose.material3.Scaffold
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.navigation.compose.currentBackStackEntryAsState
+import androidx.navigation.compose.rememberNavController
+import com.jasmeet.openinapp.appComponents.BottomBar
+import com.jasmeet.openinapp.navigation.MainNavigationGraph
 import com.jasmeet.openinapp.tokenManager.TokenManager
 import com.jasmeet.openinapp.ui.theme.OpeninAppTheme
+import com.jasmeet.openinapp.utils.BottomNavigationItem
 import com.jasmeet.openinapp.viewModel.MainViewModel
 
 /**
@@ -38,9 +46,44 @@ class MainActivity : ComponentActivity() {
         enableEdgeToEdge()
 
         setContent {
+            val navHost = rememberNavController()
             OpeninAppTheme {
-                LinkScreen(viewModel = viewModel)
+                MainApp(viewModel = viewModel)
             }
         }
+    }
+}
+
+
+@SuppressLint("UnusedMaterial3ScaffoldPaddingParameter")
+@Composable
+private fun MainApp(viewModel: MainViewModel) {
+    val navController = rememberNavController()
+    val navBackStackEntry by navController.currentBackStackEntryAsState()
+    val currentDestination = navBackStackEntry?.destination
+    val itemList = listOf(
+        BottomNavigationItem.Links,
+        BottomNavigationItem.Courses,
+        BottomNavigationItem.Add,
+        BottomNavigationItem.Campaigns,
+        BottomNavigationItem.Profile
+    )
+
+    val bottomBarDestination = itemList.any {
+        it.route == currentDestination?.route
+    }
+
+    Scaffold(
+        bottomBar = {
+            if (bottomBarDestination) {
+                BottomBar(
+                    navController = navController,
+                    currentDestination = currentDestination,
+                    screens = itemList
+                )
+            }
+        },
+    ) {
+        MainNavigationGraph(navHostController = navController, viewModel)
     }
 }

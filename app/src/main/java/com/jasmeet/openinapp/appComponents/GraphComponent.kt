@@ -1,7 +1,6 @@
 package com.jasmeet.openinapp.appComponents
 
 import android.widget.Toast
-import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -14,6 +13,7 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
@@ -25,12 +25,9 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Search
-import androidx.compose.material.icons.outlined.ErrorOutline
 import androidx.compose.material3.CardDefaults
-import androidx.compose.material3.Divider
 import androidx.compose.material3.ElevatedCard
 import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -59,7 +56,6 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import coil.compose.SubcomposeAsyncImage
 import com.jasmeet.openinapp.GreetingsComponent
 import com.jasmeet.openinapp.R
 import com.jasmeet.openinapp.tokenManager.TokenManager
@@ -121,6 +117,8 @@ fun GraphComponent() {
 
     ElevatedCard(
         Modifier
+            .navigationBarsPadding()
+            .padding(bottom = 25.dp)
             .fillMaxSize()
             .offset(y = (-12).dp),
         colors = CardDefaults.elevatedCardColors(
@@ -304,7 +302,7 @@ fun GraphComponent() {
                             }
                             Surface(
                                 Modifier
-                                    .padding(horizontal = 16.dp,)
+                                    .padding(horizontal = 16.dp)
                                     .fillMaxWidth()
                                     .wrapContentHeight()
                                     .drawBehind {
@@ -347,7 +345,9 @@ fun GraphComponent() {
                                         modifier = Modifier
                                             .size(24.dp)
                                             .clickable {
-                                                Toast.makeText(context, "Copied", Toast.LENGTH_SHORT).show()
+                                                Toast
+                                                    .makeText(context, "Copied", Toast.LENGTH_SHORT)
+                                                    .show()
                                             }
                                     )
 
@@ -444,7 +444,7 @@ fun GraphComponent() {
                             }
                             Surface(
                                 Modifier
-                                    .padding(horizontal = 16.dp,)
+                                    .padding(horizontal = 16.dp)
                                     .fillMaxWidth()
                                     .wrapContentHeight()
                                     .drawBehind {
@@ -487,7 +487,9 @@ fun GraphComponent() {
                                         modifier = Modifier
                                             .size(24.dp)
                                             .clickable {
-                                                Toast.makeText(context, "Copied", Toast.LENGTH_SHORT).show()
+                                                Toast
+                                                    .makeText(context, "Copied", Toast.LENGTH_SHORT)
+                                                    .show()
                                             }
                                     )
 
