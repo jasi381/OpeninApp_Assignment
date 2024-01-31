@@ -7,6 +7,8 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.google.gson.Gson
 import com.jasmeet.openinapp.data.ApiResponse
+import com.jasmeet.openinapp.data.RecentLink
+import com.jasmeet.openinapp.data.TopLink
 import com.jasmeet.openinapp.tokenManager.TokenManager
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -28,12 +30,18 @@ class MainViewModel(private val tokenManager: TokenManager) :ViewModel(){
 
     private val apiUrl = "https://api.inopenapp.com/api/v1/dashboardNew"
 
+    private val _recentLinksResult = MutableLiveData<List<RecentLink>>()
+    val recentLinks: LiveData<List<RecentLink>> get() = _recentLinksResult
+
+    private val _topLinksResult = MutableLiveData<List<TopLink>>()
+    val topLinks: LiveData<List<TopLink>> get() = _topLinksResult
+
     fun fetchData() {
         viewModelScope.launch(Dispatchers.IO) {
             val result = makeAPICall()
             _apiResult.postValue(result)
+            Log.d("MainViewModel", "fetchData: $result")
             parseApiResponse(result)
-            Log.d("TAG", "fetchData: $result")
         }
     }
 
@@ -41,6 +49,8 @@ class MainViewModel(private val tokenManager: TokenManager) :ViewModel(){
         val gson = Gson()
         val apiResponse = gson.fromJson(response, ApiResponse::class.java)
         _apiResponse.postValue(apiResponse)
+        _recentLinksResult.postValue(apiResponse.data.recent_links)
+        _topLinksResult.postValue(apiResponse.data.top_links)
     }
 
     private fun makeAPICall(): String {

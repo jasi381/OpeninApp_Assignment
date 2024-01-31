@@ -1,12 +1,14 @@
 package com.jasmeet.openinapp.appComponents
 
 import android.widget.Toast
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
@@ -16,16 +18,20 @@ import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.wrapContentHeight
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Search
+import androidx.compose.material.icons.outlined.ErrorOutline
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Divider
 import androidx.compose.material3.ElevatedCard
 import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -38,17 +44,27 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.drawBehind
+import androidx.compose.ui.geometry.CornerRadius
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.PathEffect
+import androidx.compose.ui.graphics.drawscope.Stroke
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.vectorResource
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import coil.compose.SubcomposeAsyncImage
 import com.jasmeet.openinapp.GreetingsComponent
 import com.jasmeet.openinapp.R
 import com.jasmeet.openinapp.tokenManager.TokenManager
 import com.jasmeet.openinapp.ui.theme.figtree
+import com.jasmeet.openinapp.utils.convertDateFormat
 import com.jasmeet.openinapp.viewModel.MainViewModel
 
 /**
@@ -71,15 +87,12 @@ fun GraphComponent() {
     val topLocation = apiResponse?.top_location
     val topSource = apiResponse?.top_source
 
+    val recentLinksVm by viewModel.recentLinks.observeAsState(listOf())
+    val topLinksVm by viewModel.topLinks.observeAsState(listOf())
+
+    val isAllClicked = rememberSaveable { mutableStateOf(false) }
+
     var selectedTabIndex by rememberSaveable { mutableIntStateOf(0) }
-
-    val currentList = if (selectedTabIndex == 0) topLinks else recentLinks
-
-    var showAllItems by rememberSaveable { mutableStateOf(false) }
-
-    val displayedList =
-        if (showAllItems) currentList else currentList.take(4)
-
 
     val topLinksModifier = Modifier
         .clickable { selectedTabIndex = 0 }
@@ -97,6 +110,13 @@ fun GraphComponent() {
         )
         .padding(vertical = 8.dp, horizontal = 10.dp)
 
+    val stroke = Stroke(
+        width = 7f,
+        pathEffect = PathEffect.dashPathEffect(floatArrayOf(10f, 10f), 0f)
+    )
+
+    val recentLinksList = if (selectedTabIndex == 0 && isAllClicked.value) recentLinksVm.take(3) else recentLinksVm
+    val topLinksList = if (selectedTabIndex != 0 && isAllClicked.value) topLinksVm.take(3) else topLinksVm
 
 
     ElevatedCard(
@@ -122,7 +142,7 @@ fun GraphComponent() {
 
         Spacer(modifier = Modifier.height(20.dp))
 
-        Cards(todaysClicks= todayClicks, topLocation = topLocation, topSource = topSource)
+        Cards(todaysClicks = todayClicks, topLocation = topLocation, topSource = topSource)
 
         Spacer(modifier = Modifier.height(20.dp))
 
@@ -191,12 +211,293 @@ fun GraphComponent() {
         }
         Spacer(modifier = Modifier.height(28.dp))
 
-        Box(Modifier.height(LocalConfiguration.current.screenHeightDp.dp / 3f)) {
-            LazyColumn {
-                items(displayedList) { link ->
-                    Text(text = link.title, modifier = Modifier.padding(16.dp))
-                    Divider(color = Color.Gray, thickness = 1.dp)
+        Box(
+            Modifier.height(LocalConfiguration.current.screenHeightDp.dp /1.64f)
+        ) {
+            LazyColumn(Modifier.fillMaxSize(), verticalArrangement = Arrangement.spacedBy(16.dp)) {
+                if (selectedTabIndex == 0) {
+                    items(recentLinksList) { link ->
+
+                        Column(Modifier.background(Color.Transparent)) {
+                            Surface(
+                                Modifier
+                                    .padding(horizontal = 16.dp)
+                                    .clip(RoundedCornerShape(topEnd = 8.dp, topStart = 8.dp)),
+                                color = Color.White,
+                                shape = RoundedCornerShape(topEnd = 8.dp, topStart = 8.dp)
+                            ) {
+                                Row(
+                                    Modifier
+                                        .padding(bottom = 10.dp)
+                                        .fillMaxSize(),
+                                    verticalAlignment = Alignment.CenterVertically,
+                                ) {
+
+                                    NetworkImage(
+                                        imageModifier = Modifier
+                                            .padding(2.dp)
+                                            .size(48.dp),
+                                        imgUrl = link.original_image,
+                                        containerModifier = Modifier.padding(10.dp)
+                                    )
+
+                                    Column(
+                                        Modifier
+                                            .padding(start = 10.dp)
+                                            .weight(1f),
+                                        verticalArrangement = Arrangement.Center,
+                                        horizontalAlignment = Alignment.Start,
+                                    ) {
+                                        Text(
+                                            text = link.title,
+                                            style = TextStyle(
+                                                fontSize = 14.sp,
+                                                lineHeight = 24.sp,
+                                                fontFamily = figtree,
+                                                fontWeight = FontWeight(400),
+                                                color = Color(0xFF000000),
+                                            ),
+                                            modifier = Modifier,
+                                            maxLines = 1,
+                                            overflow = TextOverflow.Ellipsis,
+                                        )
+                                        Text(
+                                            text = convertDateFormat(link.created_at),
+                                            style = TextStyle(
+                                                fontSize = 12.sp,
+                                                lineHeight = 18.sp,
+                                                fontFamily = figtree,
+                                                fontWeight = FontWeight(400),
+                                                color = Color(0xFF999CA0),
+                                            )
+                                        )
+                                    }
+                                    Spacer(modifier = Modifier.weight(1f))
+
+                                    Column(Modifier.padding(end = 10.dp)) {
+                                        Text(
+                                            text = "${link.total_clicks.toInt()}",
+                                            style = TextStyle(
+                                                fontSize = 14.sp,
+                                                lineHeight = 24.sp,
+                                                fontFamily = figtree,
+                                                fontWeight = FontWeight(600),
+                                                color = Color(0xFF000000),
+                                                textAlign = TextAlign.Center,
+                                            ),
+                                            modifier = Modifier.align(Alignment.CenterHorizontally)
+                                        )
+                                        Text(
+                                            text = "Clicks",
+                                            style = TextStyle(
+                                                fontSize = 12.sp,
+                                                lineHeight = 18.sp,
+                                                fontFamily = figtree,
+                                                fontWeight = FontWeight(400),
+                                                color = Color(0xFF999CA0),
+                                            )
+                                        )
+                                    }
+
+
+                                }
+                            }
+                            Surface(
+                                Modifier
+                                    .padding(horizontal = 16.dp,)
+                                    .fillMaxWidth()
+                                    .wrapContentHeight()
+                                    .drawBehind {
+                                        drawRoundRect(
+                                            color = Color(0xffa6c7ff),
+                                            style = stroke,
+                                            cornerRadius = CornerRadius(8.dp.toPx(), 8.dp.toPx())
+                                        )
+                                    },
+                                color = Color(0xffe8f1ff),
+                                shape = RoundedCornerShape(bottomEnd = 8.dp, bottomStart = 8.dp)
+                            ) {
+                                Row (
+                                    Modifier
+                                        .padding(
+                                            vertical = 14.5.dp,
+                                            horizontal = 12.dp
+                                        )
+                                        .fillMaxWidth(),
+                                    horizontalArrangement = Arrangement.SpaceBetween,
+                                    verticalAlignment = Alignment.CenterVertically
+                                ){
+                                    Text(
+                                        text = link.web_link,
+                                        style = TextStyle(
+                                            fontSize = 14.sp,
+                                            lineHeight = 16.sp,
+                                            fontFamily = figtree,
+                                            fontWeight = FontWeight(400),
+                                            color = Color(0xFF0E6FFF),
+                                        ),
+                                        maxLines = 1,
+                                        overflow = TextOverflow.Ellipsis,
+                                        modifier = Modifier.weight(1f)
+                                    )
+                                    Icon(
+                                        imageVector = ImageVector.vectorResource(R.drawable.ic_copy),
+                                        contentDescription = null,
+                                        tint = Color(0xff0E6FFF),
+                                        modifier = Modifier
+                                            .size(24.dp)
+                                            .clickable {
+                                                Toast.makeText(context, "Copied", Toast.LENGTH_SHORT).show()
+                                            }
+                                    )
+
+                                }
+                            }
+                        }
+
+                    }
+                } else {
+                    items(topLinksList) { top ->
+                        Column(Modifier.background(Color.Transparent)) {
+                            Surface(
+                                Modifier
+                                    .padding(horizontal = 16.dp)
+                                    .clip(RoundedCornerShape(topEnd = 8.dp, topStart = 8.dp)),
+                                color = Color.White,
+                                shape = RoundedCornerShape(topEnd = 8.dp, topStart = 8.dp)
+                            ) {
+                                Row(
+                                    Modifier
+                                        .padding(bottom = 10.dp)
+                                        .fillMaxSize(),
+                                    verticalAlignment = Alignment.CenterVertically,
+                                ) {
+
+                                    NetworkImage(
+                                        imageModifier = Modifier
+                                            .padding(2.dp)
+                                            .size(48.dp),
+                                        imgUrl = top.original_image,
+                                        containerModifier = Modifier.padding(10.dp)
+                                    )
+
+                                    Column(
+                                        Modifier
+                                            .padding(start = 10.dp)
+                                            .weight(1f),
+                                        verticalArrangement = Arrangement.Center,
+                                        horizontalAlignment = Alignment.Start,
+                                    ) {
+                                        Text(
+                                            text = top.title,
+                                            style = TextStyle(
+                                                fontSize = 14.sp,
+                                                lineHeight = 24.sp,
+                                                fontFamily = figtree,
+                                                fontWeight = FontWeight(400),
+                                                color = Color(0xFF000000),
+                                            ),
+                                            modifier = Modifier,
+                                            maxLines = 1,
+                                            overflow = TextOverflow.Ellipsis,
+                                        )
+                                        Text(
+                                            text = convertDateFormat(top.created_at),
+                                            style = TextStyle(
+                                                fontSize = 12.sp,
+                                                lineHeight = 18.sp,
+                                                fontFamily = figtree,
+                                                fontWeight = FontWeight(400),
+                                                color = Color(0xFF999CA0),
+                                            )
+                                        )
+                                    }
+                                    Spacer(modifier = Modifier.weight(1f))
+
+                                    Column(Modifier.padding(end = 10.dp)) {
+                                        Text(
+                                            text = "${top.total_clicks}",
+                                            style = TextStyle(
+                                                fontSize = 14.sp,
+                                                lineHeight = 24.sp,
+                                                fontFamily = figtree,
+                                                fontWeight = FontWeight(600),
+                                                color = Color(0xFF000000),
+                                                textAlign = TextAlign.Center,
+                                            ),
+                                            modifier = Modifier.align(Alignment.CenterHorizontally)
+                                        )
+                                        Text(
+                                            text = "Clicks",
+                                            style = TextStyle(
+                                                fontSize = 12.sp,
+                                                lineHeight = 18.sp,
+                                                fontFamily = figtree,
+                                                fontWeight = FontWeight(400),
+                                                color = Color(0xFF999CA0),
+                                            )
+                                        )
+                                    }
+
+
+                                }
+                            }
+                            Surface(
+                                Modifier
+                                    .padding(horizontal = 16.dp,)
+                                    .fillMaxWidth()
+                                    .wrapContentHeight()
+                                    .drawBehind {
+                                        drawRoundRect(
+                                            color = Color(0xffa6c7ff),
+                                            style = stroke,
+                                            cornerRadius = CornerRadius(8.dp.toPx(), 8.dp.toPx())
+                                        )
+                                    },
+                                color = Color(0xffe8f1ff),
+                                shape = RoundedCornerShape(bottomEnd = 8.dp, bottomStart = 8.dp)
+                            ) {
+                                Row (
+                                    Modifier
+                                        .padding(
+                                            vertical = 14.5.dp,
+                                            horizontal = 12.dp
+                                        )
+                                        .fillMaxWidth(),
+                                    horizontalArrangement = Arrangement.SpaceBetween,
+                                    verticalAlignment = Alignment.CenterVertically
+                                ){
+                                    Text(
+                                        text = top.web_link,
+                                        style = TextStyle(
+                                            fontSize = 14.sp,
+                                            lineHeight = 16.sp,
+                                            fontFamily = figtree,
+                                            fontWeight = FontWeight(400),
+                                            color = Color(0xFF0E6FFF),
+                                        ),
+                                        maxLines = 1,
+                                        overflow = TextOverflow.Ellipsis,
+                                        modifier = Modifier.weight(1f)
+                                    )
+                                    Icon(
+                                        imageVector = ImageVector.vectorResource(R.drawable.ic_copy),
+                                        contentDescription = null,
+                                        tint = Color(0xff0E6FFF),
+                                        modifier = Modifier
+                                            .size(24.dp)
+                                            .clickable {
+                                                Toast.makeText(context, "Copied", Toast.LENGTH_SHORT).show()
+                                            }
+                                    )
+
+                                }
+                            }
+                        }
+
+                    }
                 }
+
             }
         }
 
@@ -204,8 +505,10 @@ fun GraphComponent() {
 
         OutlinedButton(
             icon = R.drawable.ic_links,
-            title = if (showAllItems) "View less Links" else "View all Links",
-            onClick = { showAllItems = !showAllItems }
+            title = "View all Links",
+            onClick = {
+                isAllClicked.value = !isAllClicked.value
+            }
         )
         Spacer(modifier = Modifier.height(40.dp))
 
@@ -287,7 +590,6 @@ private fun Cards(
 }
 
 
-
 /**
  * Todo: Add graph
  */
@@ -303,29 +605,3 @@ fun Graph(modifier: Modifier = Modifier) {
     ) {}
 
 }
-
-data class Link(val title: String, val url: String)
-
-val topLinks = listOf(
-    Link("Top Link 1", "https://example.com/top1"),
-    Link("Top Link 2", "https://example.com/top2"),
-    Link("Top Link 2", "https://example.com/top2"),
-    Link("Top Link 2", "https://example.com/top2"),
-    Link("Top Link 2", "https://example.com/top2"),
-    Link("Top Link 2", "https://example.com/top2"),
-    Link("Top Link 2", "https://example.com/top2"),
-    Link("Top Link 2", "https://example.com/top2"),
-
-    )
-val recentLinks = listOf(
-    Link("Recent Link 1", "https://example.com/recent1"),
-    Link("Recent Link 2", "https://example.com/recent2"),
-    Link("Recent Link 2", "https://example.com/recent2"),
-    Link("Recent Link 2", "https://example.com/recent2"),
-    Link("Recent Link 2", "https://example.com/recent2"),
-    Link("Recent Link 2", "https://example.com/recent2"),
-    Link("Recent Link 2", "https://example.com/recent2"),
-    Link("Recent Link 2", "https://example.com/recent2"),
-    Link("Recent Link 2", "https://example.com/recent2"),
-    // Add more recent links as needed
-)
