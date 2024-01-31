@@ -94,5 +94,8 @@ dependencies {
     implementation(libs.androidx.material.icons.extended)
 
     //lottie
-    implementation (libs.lottie.compose)
+    implementation(libs.lottie.compose)
+
+    //YCharts
+    implementation("co.yml:ycharts:2.1.0")
 }
