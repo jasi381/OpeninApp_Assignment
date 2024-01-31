@@ -65,7 +65,7 @@ fun AddFloatingActionButton(navController: NavHostController) {
         Icon(
             imageVector = ImageVector.vectorResource(R.drawable.ic_add),
             contentDescription = "",
-            tint = Color(0xff000000),
+            tint = Color(0xffffffff),
             modifier = Modifier
                 .padding(10.dp)
                 .size(28.dp)

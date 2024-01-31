@@ -1,4 +1,4 @@
-package com.jasmeet.openinapp
+package com.jasmeet.openinapp.appComponents
 
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.Row
@@ -16,6 +16,7 @@ import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.jasmeet.openinapp.R
 import com.jasmeet.openinapp.ui.theme.figtree
 
 @Composable

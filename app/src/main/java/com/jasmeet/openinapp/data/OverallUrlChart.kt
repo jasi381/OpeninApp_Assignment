@@ -33,3 +33,8 @@ data class OverallUrlChart(
     val `2024-01-29`: Int,
     val `2024-01-30`: Int
 )
+
+data class DateValue(
+    val date: String,
+    val value: Int
+)

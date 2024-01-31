@@ -1,5 +1,7 @@
 package com.jasmeet.openinapp.appComponents
 
+import android.graphics.Typeface
+import android.util.Log
 import android.widget.Toast
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -43,6 +45,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.geometry.CornerRadius
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.PathEffect
 import androidx.compose.ui.graphics.drawscope.Stroke
@@ -56,12 +59,27 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.jasmeet.openinapp.GreetingsComponent
+import co.yml.charts.axis.AxisData
+import co.yml.charts.common.model.Point
+import co.yml.charts.ui.linechart.LineChart
+import co.yml.charts.ui.linechart.model.Line
+import co.yml.charts.ui.linechart.model.LineChartData
+import co.yml.charts.ui.linechart.model.LinePlotData
+import co.yml.charts.ui.linechart.model.LineStyle
+import co.yml.charts.ui.linechart.model.LineType
+import co.yml.charts.ui.linechart.model.SelectionHighlightPoint
+import co.yml.charts.ui.linechart.model.SelectionHighlightPopUp
+import co.yml.charts.ui.linechart.model.ShadowUnderLine
 import com.jasmeet.openinapp.R
+import com.jasmeet.openinapp.data.DateValue
 import com.jasmeet.openinapp.tokenManager.TokenManager
 import com.jasmeet.openinapp.ui.theme.figtree
 import com.jasmeet.openinapp.utils.convertDateFormat
+import com.jasmeet.openinapp.utils.getLineChartData
 import com.jasmeet.openinapp.viewModel.MainViewModel
+import com.patrykandpatrick.vico.core.entry.entryOf
+import java.time.LocalDate
+import java.time.Month
 
 /**
  * @author: Jasmeet Singh
@@ -78,6 +96,11 @@ fun GraphComponent() {
     }
 
     val apiResponse by viewModel.apiResponse.observeAsState()
+    val overallUrlChartList by viewModel.overallUrlChartList.observeAsState(listOf())
+
+    val overAllList = overallUrlChartList
+        .filter { it.value != 0 }
+        .mapIndexed { index, dateValue -> entryOf(index, dateValue.value.toFloat()) }
 
     val todayClicks = apiResponse?.today_clicks
     val topLocation = apiResponse?.top_location
@@ -136,7 +159,16 @@ fun GraphComponent() {
         )
         Spacer(modifier = Modifier.height(24.dp))
 
-        Graph()
+        Graph(
+            pointsData = if (overallUrlChartList.isEmpty()) getLineChartData(
+                12,
+                start = -50,
+                maxRange = 50
+            )
+            else
+                getLineChartData(dateValues = overallUrlChartList),
+            overallUrlChartList = overallUrlChartList
+        )
 
         Spacer(modifier = Modifier.height(20.dp))
 
@@ -147,7 +179,9 @@ fun GraphComponent() {
         OutlinedButton(
             title = "View Analytics",
             icon = R.drawable.ic_analytics,
-            onClick = { }
+            onClick = {
+                Log.d("demo", "${overallUrlChartList}}")
+            }
         )
 
         Spacer(modifier = Modifier.height(40.dp))
@@ -592,18 +626,82 @@ private fun Cards(
 }
 
 
-/**
- * Todo: Add graph
- */
 @Composable
-fun Graph(modifier: Modifier = Modifier) {
+fun Graph(pointsData: List<Point>, overallUrlChartList: List<DateValue>) {
+
+    val listSize = overallUrlChartList.filter { it.value != 0 }.size
     Box(
-        modifier = modifier
+        modifier = Modifier
             .padding(horizontal = 16.dp)
             .clip(RoundedCornerShape(8.dp))
+            .height(200.dp)
             .background(Color.White, RoundedCornerShape(8.dp))
             .fillMaxWidth()
-            .height(200.dp)
-    ) {}
 
+    ) {
+        val xAxisData = AxisData.Builder()
+            .steps(listSize)
+            .labelData { i ->
+                val monthLabel = getMonthLabelForIndex(i)
+                monthLabel
+            }
+            .axisLineColor(Color(0xfff1f2f2))
+            .build()
+
+        val yAxisData = AxisData.Builder()
+            .steps(4)
+            .labelData { i ->
+                (i * 25).toString()
+            }
+            .axisLineColor(Color.Black)
+            .build()
+
+        val data = LineChartData(
+            linePlotData = LinePlotData(
+                lines = listOf(
+                    Line(
+                        dataPoints = pointsData,
+                        lineStyle = LineStyle(
+                            lineType = LineType.SmoothCurve(isDotted = true),
+                            color = Color(0xff3e8bff)
+                        ),
+                        shadowUnderLine = ShadowUnderLine(
+                            brush = Brush.verticalGradient(
+                                listOf(
+                                    Color(0xff3e8bff),
+                                    Color.Transparent
+                                ),
+                            ), alpha = 0.3f
+                        ),
+                        selectionHighlightPoint = SelectionHighlightPoint(
+                            color = Color(0xff3e8bff)
+                        ),
+                        selectionHighlightPopUp = SelectionHighlightPopUp(
+                            backgroundColor = Color.Black,
+                            backgroundStyle = Stroke(2f),
+                            labelColor = Color.Red,
+                            labelTypeface = Typeface.DEFAULT_BOLD
+                        )
+                    )
+                )
+            ),
+            xAxisData = xAxisData,
+            yAxisData = yAxisData
+        )
+
+        LineChart(
+            modifier = Modifier
+                .background(Color.White)
+                .fillMaxSize(),
+            lineChartData = data
+        )
+
+    }
+
+}
+
+private fun getMonthLabelForIndex(index: Int): String {
+    val currentMonth = LocalDate.now().monthValue
+    val targetMonth = (currentMonth + index - 1) % 12 + 1
+    return Month.of(targetMonth).toString().substring(0, 3)
 }

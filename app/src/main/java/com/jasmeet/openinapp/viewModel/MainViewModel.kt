@@ -7,6 +7,8 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.google.gson.Gson
 import com.jasmeet.openinapp.data.ApiResponse
+import com.jasmeet.openinapp.data.DateValue
+import com.jasmeet.openinapp.data.OverallUrlChart
 import com.jasmeet.openinapp.data.RecentLink
 import com.jasmeet.openinapp.data.TopLink
 import com.jasmeet.openinapp.tokenManager.TokenManager
@@ -36,6 +38,9 @@ class MainViewModel(private val tokenManager: TokenManager) :ViewModel(){
     private val _topLinksResult = MutableLiveData<List<TopLink>>()
     val topLinks: LiveData<List<TopLink>> get() = _topLinksResult
 
+
+    private val _overallUrlChartList = MutableLiveData<List<DateValue>>()
+    val overallUrlChartList: LiveData<List<DateValue>> get() = _overallUrlChartList
     fun fetchData() {
         viewModelScope.launch(Dispatchers.IO) {
             val result = makeAPICall()
@@ -51,6 +56,15 @@ class MainViewModel(private val tokenManager: TokenManager) :ViewModel(){
         _apiResponse.postValue(apiResponse)
         _recentLinksResult.postValue(apiResponse.data.recent_links)
         _topLinksResult.postValue(apiResponse.data.top_links)
+        val overallUrlChartList = apiResponse.data.overall_url_chart.toDateValueList()
+        _overallUrlChartList.postValue(overallUrlChartList)
+    }
+
+    private fun OverallUrlChart.toDateValueList(): List<DateValue> {
+        return this.javaClass.declaredFields.map {
+            it.isAccessible = true
+            DateValue(it.name, it.get(this) as Int)
+        }
     }
 
     private fun makeAPICall(): String {
